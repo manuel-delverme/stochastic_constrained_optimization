@@ -26,7 +26,6 @@ def stochastic_linear_constraint(tb):
 
         obj_i = loss_scale * loss_i.pow(2).sum()
         constr_i = x.T.matmul(Ai)
-        print(obj_i.item(), constr_i.abs().sum().item())
 
         return obj_i, [constr_i, ], None
 
@@ -46,11 +45,27 @@ def stochastic_linear_constraint(tb):
         lagr = optimizer.step(closure)
         obj, (defect,), _ = closure()
 
-        tb.add_scalar(f"train/mean_defect", float(defect.mean()), step)
-        tb.add_scalar(f"train/mean_abs_defect", float(defect.abs().mean()), step)
-        tb.add_scalar(f"train/mean_lambda", float(optimizer.equality_multipliers[0].weight.mean()), step)
-        tb.add_scalar(f"train/mean_abs_lambda", float(optimizer.equality_multipliers[0].weight.abs().mean()), step)
+        dual = optimizer.equality_multipliers[0].weight
+
+        tb.add_scalar(f"primal/obj", float(obj), step)
+
+        tb.add_histogram(f"primal/x", x.detach().numpy(), step)
+        tb.add_scalar(f"primal/mean_x", float(x.mean()), step)
+        tb.add_scalar(f"primal/mean_abs_x", float(x.mean()), step)
+
+        tb.add_scalar(f"dual/mean_defect", float(defect.mean()), step)
+        tb.add_scalar(f"dual/mean_abs_defect", float(defect.abs().mean()), step)
+
+        tb.add_histogram(f"dual/lambda", dual.detach().numpy(), step)
+        tb.add_scalar(f"dual/mean_lambda", float(dual.mean()), step)
+        tb.add_scalar(f"dual/mean_abs_lambda", float(dual.abs().mean()), step)
+
+        tb.add_scalar(f"train/lagr", float(lagr), step)
         tb.add_histogram("train/indices", batch_index, step)
+
+        for idx in range(10):
+            tb.add_scalar(f"{idx}/primal", float(x[idx]), step)
+            tb.add_scalar(f"{idx}/dual", float(dual[:, idx]), step)
 
         gradnorm.append(x.grad.abs().sum() + optimizer.equality_multipliers[0].weight.grad.abs().sum())
 

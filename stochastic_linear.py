@@ -10,11 +10,11 @@ n = d = 100
 eta = 0.2
 loss_scale = 0.
 constr_scale = 1.
-iters = 10000
+iterations = 10000
 
 
 def stochastic_linear_constraint(logger):
-    plot_every = iters // 1000
+    plot_every = iterations // 1000
 
     x = torch.ones((d, 1), requires_grad=True)
 
@@ -40,7 +40,7 @@ def stochastic_linear_constraint(logger):
     )
     grad_norm = collections.deque(maxlen=d)
 
-    for step in tqdm.trange(iters):
+    for step in tqdm.trange(iterations):
         batch_index = torch.randint(0, A.shape[0], (1,))
         closure = lambda: closure_(batch_index)
 
